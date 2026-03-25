@@ -14,6 +14,7 @@ export default function MedicationFinder() {
   const [hasSearched, setHasSearched] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [searchError, setSearchError] = useState<string | null>(null);
 
   React.useEffect(() => {
     if ("geolocation" in navigator) {
@@ -35,34 +36,32 @@ export default function MedicationFinder() {
     if (!searchQuery.trim()) return;
     setIsLoading(true);
     setHasSearched(true);
+    setSearchError(null);
     try {
       const lat = userLocation?.lat || 5.6037; // Default to Accra if not available
       const lng = userLocation?.lng || -0.1870;
       
       const url = `${serverUrl}/pharmacy/search-nearby-medicine?term=${encodeURIComponent(searchQuery)}&latitude=${lat}&longitude=${lng}`;
       const res = await fetch(url);
-      if (!res.ok) throw new Error("Failed");
-      const data = await res.json();
-      const results: PharmacyMedicine[] = data.map((item: {
-        pharmacy_id: number;
-        pharmacy_name: string;
-        pharmacy_location: string;
-        pharmacy_phone?: string;
-        pharmacy_email?: string;
-        latitude?: string;
-        longitude?: string;
-        pharmacy_ratings?: string;
-        medication_id: number;
-        medication_name: string;
-        price: string;
-        category: string;
-        quantity: number;
-      }) => ({
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`The search service is temporarily unavailable. Please try again later.`);
+      }
+      
+      const rawData = await res.json();
+      // Ensure data is an array (handle { results: [] } or just [])
+      const data = Array.isArray(rawData) ? rawData : (rawData.results || []);
+      
+      if (data.length === 0) {
+        setSearchError("No results found for your search. Try a different medication name.");
+      }
+      
+      const results: PharmacyMedicine[] = data.map((item: any) => ({
         pharmacy: {
-          id: String(item.pharmacy_id),
-          name: item.pharmacy_name,
-          address: item.pharmacy_location,
-          phone: item.pharmacy_phone ?? "N/A",
+          id: String(item.pharmacy_id || ""),
+          name: item.pharmacy_name || "Unknown Pharmacy",
+          address: item.pharmacy_location || "No address provided",
+          phone: item.pharmacy_phone || "N/A",
           email: item.pharmacy_email,
           latitude: item.latitude ? parseFloat(item.latitude) : undefined,
           longitude: item.longitude ? parseFloat(item.longitude) : undefined,
@@ -70,13 +69,13 @@ export default function MedicationFinder() {
           is_verified: true,
         },
         medicine: {
-          id: String(item.medication_id),
-          name: item.medication_name,
-          price: parseFloat(item.price),
-          category: item.category,
+          id: String(item.medication_id || ""),
+          name: item.medication_name || searchQuery,
+          price: item.price ? parseFloat(item.price) : 0,
+          category: item.category || "General",
         },
-        in_stock: item.quantity > 0,
-        quantity_available: item.quantity,
+        in_stock: (item.quantity || 0) > 0,
+        quantity_available: item.quantity || 0,
         last_updated: new Date().toISOString(),
       }));
       setSearchResults(
@@ -209,6 +208,11 @@ export default function MedicationFinder() {
                   )}
                 </button>
               </div>
+              {searchError && (
+                <div style={{ color: "#ff6b6b", fontSize: 14, marginTop: 8, textAlign: "center", padding: "8px 16px", background: "rgba(255, 107, 107, 0.1)", borderRadius: 10, border: "1px solid rgba(255, 107, 107, 0.2)" }}>
+                  {searchError}
+                </div>
+              )}
 
               {/* Category filters */}
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
