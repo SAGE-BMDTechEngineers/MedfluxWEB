@@ -1,7 +1,7 @@
 import Navbar from "@/components/Navbar";
 import ThreeBackground from "@/components/ThreeBackground";
 
-const pharmacistImg = "https://images.unsplash.com/photo-1587854692152-cbe660dbbb88?auto=format&fit=crop&q=80&w=1280&h=720";
+const pharmacistImg = "https://media.istockphoto.com/id/1480000045/photo/pharmacy-black-man-and-woman-with-healthcare-medicine-and-conversation-for-instructions.webp?a=1&b=1&s=612x612&w=0&k=20&c=oHW3NwoZVLOjooFW-HagSpbeZ1cCFZ7lKPllsjgUa88=";
 const teamImg = "https://images.unsplash.com/photo-1576602976047-174e57a47881?auto=format&fit=crop&q=80&w=1280&h=720";
 
 const values = [

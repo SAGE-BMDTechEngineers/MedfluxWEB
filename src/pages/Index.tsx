@@ -13,13 +13,34 @@ export default function MedicationFinder() {
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+
+  React.useEffect(() => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+        },
+        (error) => {
+          console.error("Geolocation error:", error);
+        }
+      );
+    }
+  }, []);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
     setIsLoading(true);
     setHasSearched(true);
     try {
-      const res = await fetch(`${serverUrl}/pharmacy/search-nearby-medicine?term=${encodeURIComponent(searchQuery)}`);
+      const lat = userLocation?.lat || 5.6037; // Default to Accra if not available
+      const lng = userLocation?.lng || -0.1870;
+      
+      const url = `${serverUrl}/pharmacy/search-nearby-medicine?term=${encodeURIComponent(searchQuery)}&latitude=${lat}&longitude=${lng}`;
+      const res = await fetch(url);
       if (!res.ok) throw new Error("Failed");
       const data = await res.json();
       const results: PharmacyMedicine[] = data.map((item: {
@@ -63,7 +84,8 @@ export default function MedicationFinder() {
           ? results
           : results.filter((r) => r.medicine.category?.toLowerCase() === selectedCategory.toLowerCase())
       );
-    } catch {
+    } catch (error) {
+      console.error("Search error:", error);
       setSearchResults([]);
     } finally {
       setIsLoading(false);
