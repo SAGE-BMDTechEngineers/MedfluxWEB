@@ -1,7 +1,6 @@
 "use client";
 
-import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 
 /* ─────────────────────────────────────────────────────────────
@@ -18,7 +17,8 @@ function OrbitalScene({ containerRef }: { containerRef: React.RefObject<HTMLDivE
     const W = el.clientWidth, H = el.clientHeight;
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(W, H); renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.setSize(W, H);
+    renderer.setPixelRatio(typeof window !== "undefined" ? Math.min(window.devicePixelRatio, 2) : 1);
     renderer.setClearColor(0x000000, 0); el.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
@@ -91,9 +91,14 @@ function OrbitalScene({ containerRef }: { containerRef: React.RefObject<HTMLDivE
       mouse.x = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
       mouse.y = -((e.clientY - rect.top) / rect.height - 0.5) * 2;
     };
-    addEventListener("mousemove", onMouse);
-    const onResize = () => { const W2 = el.clientWidth, H2 = el.clientHeight; renderer.setSize(W2, H2); camera.aspect = W2 / H2; camera.updateProjectionMatrix(); };
-    addEventListener("resize", onResize);
+    window.addEventListener("mousemove", onMouse);
+    const onResize = () => {
+      const W2 = el.clientWidth, H2 = el.clientHeight;
+      renderer.setSize(W2, H2);
+      camera.aspect = W2 / H2;
+      camera.updateProjectionMatrix();
+    };
+    window.addEventListener("resize", onResize);
 
     const clock = new THREE.Clock(); let raf: number;
     const tick = () => {
@@ -112,7 +117,13 @@ function OrbitalScene({ containerRef }: { containerRef: React.RefObject<HTMLDivE
     };
     tick();
 
-    return () => { cancelAnimationFrame(raf); removeEventListener("mousemove", onMouse); removeEventListener("resize", onResize); renderer.dispose(); if (el.contains(renderer.domElement)) el.removeChild(renderer.domElement); };
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("mousemove", onMouse);
+      window.removeEventListener("resize", onResize);
+      renderer.dispose();
+      if (el.contains(renderer.domElement)) el.removeChild(renderer.domElement);
+    };
   }, []);
 
   return <div ref={mountRef} style={{ position: "absolute", inset: 0, zIndex: 0 }} />;

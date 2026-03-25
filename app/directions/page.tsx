@@ -1,220 +1,257 @@
-"use client"
+"use client";
 
-import React, { useEffect, useState } from "react"
-import { useSearchParams, useRouter } from "next/navigation"
-import { ArrowLeft, MapPin, Phone, Star } from "lucide-react"
-import { GoogleMap, LoadScript, Marker, DirectionsRenderer } from "@react-google-maps/api"
+import React, { useEffect, useRef, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { ArrowLeft, MapPin, Phone, Star, Navigation, Clock, Ruler, ExternalLink } from "lucide-react";
+import { Navigatr } from "@navigatr/web";
 
-// Map container style
-const containerStyle = {
-  width: "100%",
-  height: "600px",
-}
-
-const defaultCenter = {
-  lat: 5.6037, // Accra, Ghana default
-  lng: -0.1870,
-}
+/* ─────────────────────────────────────────────────────────────
+   Cinematic Directions Page  –  Navigatr SDK edition
+   Dark-cosmos design system: interactive map + routing
+   ───────────────────────────────────────────────────────────── */
 
 export default function DirectionsPage() {
-  const searchParams = useSearchParams()
-  const router = useRouter()
-  const [directions, setDirections] = useState<any>(null)
-  const [mapCenter, setMapCenter] = useState(defaultCenter)
-  const [error, setError] = useState<string>("")
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const [navigatr, setNavigatr] = useState<any>(null);
+  const [map, setMap] = useState<any>(null);
+  const [routeData, setRouteData] = useState<any>(null);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [error, setError] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Get pharmacy data from URL params
-  const pharmacyName = searchParams.get("name") || "Pharmacy"
-  const address = searchParams.get("address") || ""
-  const phone = searchParams.get("phone") || ""
-  const rating = searchParams.get("rating") || ""
-  const lat = searchParams.get("lat")
-  const lng = searchParams.get("lng")
+  // Pharmacy data from URL
+  const pharmacyName = searchParams.get("name") || "Pharmacy";
+  const address = searchParams.get("address") || "";
+  const phone = searchParams.get("phone") || "";
+  const rating = searchParams.get("rating") || "";
+  const destLat = searchParams.get("lat") ? parseFloat(searchParams.get("lat")!) : 5.6037;
+  const destLng = searchParams.get("lng") ? parseFloat(searchParams.get("lng")!) : -0.1870;
 
   useEffect(() => {
-    // Set map center if coordinates are provided
-    if (lat && lng) {
-      setMapCenter({
-        lat: parseFloat(lat),
-        lng: parseFloat(lng),
-      })
-    }
+    // Initialize Navigatr
+    const nav = new Navigatr();
+    setNavigatr(nav);
 
-    // Get user's current location for directions
+    // Get user location
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const userLocation = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          }
-
-          // If we have pharmacy coordinates, get directions
-          if (lat && lng) {
-            await fetchDirections(userLocation, {
-              lat: parseFloat(lat),
-              lng: parseFloat(lng),
-            })
-          }
+        (pos) => {
+          const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          setUserLocation(loc);
         },
-        (error) => {
-          console.log("Error getting location:", error)
-          setError("Could not get your location. Please enable location services.")
-        }
-      )
-    }
-  }, [lat, lng])
-
-  const fetchDirections = async (origin: { lat: number; lng: number }, destination: { lat: number; lng: number }) => {
-    try {
-      const directionsService = new window.google.maps.DirectionsService()
-      
-      directionsService.route(
-        {
-          origin: origin,
-          destination: destination,
-          travelMode: window.google.maps.TravelMode.DRIVING,
+        (err) => {
+          console.error("Geolocation error:", err);
+          setError("Location access denied. Please enable GPS for routing.");
+          setIsLoading(false);
         },
-        (result, status) => {
-          if (status === window.google.maps.DirectionsStatus.OK && result) {
-            setDirections(result)
-          } else {
-            console.error("Directions request failed:", status)
-          }
-        }
-      )
-    } catch (err) {
-      console.error("Error fetching directions:", err)
+        { enableHighAccuracy: true }
+      );
+    } else {
+      setError("Geolocation is not supported by your browser.");
+      setIsLoading(false);
     }
-  }
+  }, []);
 
-  const handleCall = (phoneNumber: string) => {
-    const cleanedPhone = phoneNumber.replace(/[^\d+]/g, "")
-    window.location.href = `tel:${cleanedPhone}`
-  }
+  useEffect(() => {
+    if (!navigatr || !mapContainerRef.current) return;
 
-  const handleOpenExternalMaps = () => {
-    const encodedAddress = encodeURIComponent(`${pharmacyName}, ${address}`)
-    window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`, "_blank")
-  }
+    // Create map
+    const mapInstance = navigatr.map({
+      container: mapContainerRef.current,
+      center: { lat: destLat, lng: destLng },
+      zoom: 14,
+      pitch: 45,
+    });
+    
+    // Set map style to dark to match the cosmos theme
+    navigatr.setStyleFromPreset('dark', {
+      polyline: { color: '#4f8ef7', weight: 6, opacity: 0.8 }
+    });
+
+    setMap(mapInstance);
+
+    // Add destination marker
+    mapInstance.addMarker({
+      lat: destLat,
+      lng: destLng,
+      label: pharmacyName,
+      iconHtml: `<div style="width: 24px; height: 24px; background: #4f8ef7; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 15px #4f8ef7; display: flex; alignItems: center; justifyContent: center; color: white; font-size: 12px;">🏥</div>`
+    });
+
+    return () => {
+      // Cleanup if needed (SDK might not have an explicit destroy, but we remove the ref)
+    };
+  }, [navigatr, destLat, destLng, pharmacyName]);
+
+  useEffect(() => {
+    if (!map || !userLocation || !navigatr) return;
+
+    const getRoute = async () => {
+      try {
+        const route = await navigatr.route({
+          origin: userLocation,
+          destination: { lat: destLat, lng: destLng },
+          maneuvers: true
+        });
+
+        setRouteData(route);
+        
+        // Draw route on map
+        map.drawRoute(route.polyline);
+        map.fitRoute(route.polyline);
+        
+        // Add user marker
+        map.addMarker({
+          lat: userLocation.lat,
+          lng: userLocation.lng,
+          label: 'Your Location',
+          iconHtml: `<div style="width: 18px; height: 18px; background: #00d4ff; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 10px #00d4ff;"></div>`
+        });
+
+        setIsLoading(false);
+      } catch (err) {
+        console.error("Routing error:", err);
+        setError("Could not calculate route. Using destination view.");
+        setIsLoading(false);
+      }
+    };
+
+    getRoute();
+  }, [map, userLocation, navigatr, destLat, destLng]);
+
+  const handleCall = () => {
+    if (phone && phone !== "N/A") {
+      window.location.href = `tel:${phone.replace(/[^\d+]/g, "")}`;
+    }
+  };
+
+  const handleOpenExternal = () => {
+    window.open(`https://www.google.com/maps/dir/?api=1&destination=${destLat},${destLng}`, "_blank");
+  };
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <button
+    <div style={{ background: "#020816", minHeight: "100vh", color: "#fff", fontFamily: "'DM Sans', sans-serif" }}>
+      {/* ── HEADER ── */}
+      <header style={{ 
+        position: "sticky", top: 0, zIndex: 100, 
+        background: "rgba(2, 8, 22, 0.8)", backdropFilter: "blur(16px)", 
+        borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+        padding: "16px 24px"
+      }}>
+        <div style={{ maxWidth: "1200px", margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <button 
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+            style={{ 
+              display: "flex", alignItems: "center", gap: 8, 
+              background: "none", border: "none", color: "rgba(255, 255, 255, 0.6)", 
+              cursor: "pointer", fontSize: "14px", fontWeight: 500, transition: "color 0.2s" 
+            }}
+            onMouseEnter={e => e.currentTarget.style.color = "#fff"}
+            onMouseLeave={e => e.currentTarget.style.color = "rgba(255, 255, 255, 0.6)"}
           >
-            <ArrowLeft className="h-5 w-5" />
-            <span>Back to Search</span>
+            <ArrowLeft size={18} />
+            Back to Search
           </button>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Pharmacy Info Card */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h1 className="text-2xl font-bold text-black mb-4">{pharmacyName}</h1>
           
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <MapPin className="h-5 w-5 text-indigo-600 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="font-medium text-gray-900">Address</p>
-                  <p className="text-gray-600">{address || "Address not available"}</p>
+          <div style={{ textAlign: "right" }}>
+            <h1 style={{ fontSize: "18px", fontWeight: 700, margin: 0, fontFamily: "'Syne', sans-serif" }}>{pharmacyName}</h1>
+            <p style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.4)", margin: 0 }}>{address}</p>
+          </div>
+        </div>
+      </header>
+
+      <main style={{ maxWidth: "1200px", margin: "0 auto", padding: "24px", display: "grid", gridTemplateColumns: "1fr 350px", gap: "24px" }}>
+        {/* ── LEFT: MAP ── */}
+        <div style={{ position: "relative", height: "calc(100vh - 160px)", borderRadius: "24px", overflow: "hidden", border: "1px solid rgba(255, 255, 255, 0.1)", background: "#060b18" }}>
+          <div ref={mapContainerRef} style={{ width: "100%", height: "100%" }} />
+          
+          {isLoading && (
+            <div style={{ position: "absolute", inset: 0, background: "rgba(2, 8, 22, 0.6)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10 }}>
+              <div style={{ textAlign: "center" }}>
+                <div style={{ width: "40px", height: "40px", border: "3px solid rgba(79, 142, 247, 0.2)", borderTopColor: "#4f8ef7", borderRadius: "50%", animation: "spin 1s linear infinite", margin: "0 auto 16px" }} />
+                <p style={{ fontSize: "14px", color: "#4f8ef7", fontWeight: 600 }}>Calculating Route...</p>
+              </div>
+            </div>
+          )}
+
+          {error && (
+            <div style={{ position: "absolute", bottom: "24px", left: "24px", right: "24px", background: "rgba(247, 95, 142, 0.15)", border: "1px solid rgba(247, 95, 142, 0.3)", padding: "12px 16px", borderRadius: "12px", backdropFilter: "blur(8px)", color: "#f75f8e", fontSize: "13px", zIndex: 20 }}>
+              {error}
+            </div>
+          )}
+        </div>
+
+        {/* ── RIGHT: INFO & STEPS ── */}
+        <aside style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+          {/* Stats Card */}
+          {routeData && (
+            <div style={{ background: "rgba(255, 255, 255, 0.03)", border: "1px solid rgba(255, 255, 255, 0.08)", padding: "20px", borderRadius: "20px", backdropFilter: "blur(12px)" }}>
+              <div style={{ display: "flex", gap: "16px", marginBottom: "20px" }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, color: "rgba(255, 255, 255, 0.4)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "4px" }}>
+                    <Clock size={12} /> Duration
+                  </div>
+                  <div style={{ fontSize: "20px", fontWeight: 700, color: "#4f8ef7" }}>{routeData.durationText}</div>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, color: "rgba(255, 255, 255, 0.4)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "4px" }}>
+                    <Ruler size={12} /> Distance
+                  </div>
+                  <div style={{ fontSize: "20px", fontWeight: 700, color: "#00d4ff" }}>{routeData.distanceText}</div>
                 </div>
               </div>
-
-              {phone && (
-                <div className="flex items-start gap-3">
-                  <Phone className="h-5 w-5 text-indigo-600 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="font-medium text-gray-900">Phone</p>
-                    <button
-                      onClick={() => handleCall(phone)}
-                      className="text-indigo-600 hover:text-indigo-700 hover:underline"
-                    >
-                      {phone}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {rating && (
-                <div className="flex items-center gap-3">
-                  <Star className="h-5 w-5 text-yellow-400 fill-current" />
-                  <div>
-                    <p className="font-medium text-gray-900">Rating</p>
-                    <p className="text-gray-600">{rating} / 5.0</p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="flex flex-col gap-3">
-              <button
-                onClick={handleOpenExternalMaps}
-                className="w-full px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors"
-              >
-                Open in Google Maps
-              </button>
-              {phone && (
-                <button
-                  onClick={() => handleCall(phone)}
-                  className="w-full px-6 py-3 border border-indigo-600 text-indigo-600 font-medium rounded-lg hover:bg-indigo-50 transition-colors"
-                >
-                  Call Pharmacy
+              
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                <button onClick={handleOpenExternal} style={{ width: "100%", padding: "12px", borderRadius: "12px", background: "linear-gradient(135deg, #4f8ef7, #7c3aed)", border: "none", color: "#fff", fontWeight: 700, fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "transform 0.2s" }} onMouseEnter={e => e.currentTarget.style.transform = "scale(1.02)"} onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}>
+                  <ExternalLink size={16} /> Open External Maps
                 </button>
-              )}
+                {phone && (
+                  <button onClick={handleCall} style={{ width: "100%", padding: "12px", borderRadius: "12px", background: "rgba(79, 142, 247, 0.08)", border: "1px solid rgba(79, 142, 247, 0.3)", color: "#4f8ef7", fontWeight: 600, fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                    <Phone size={16} /> Call Pharmacy
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        </div>
+          )}
 
-        {/* Map */}
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <LoadScript
-            googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ""}
-            onError={() => setError("Failed to load Google Maps. Please check your API key.")}
-          >
-            <GoogleMap mapContainerStyle={containerStyle} center={mapCenter} zoom={15}>
-              {lat && lng && (
-                <Marker
-                  position={{
-                    lat: parseFloat(lat),
-                    lng: parseFloat(lng),
-                  }}
-                  title={pharmacyName}
-                />
-              )}
-              {directions && <DirectionsRenderer directions={directions} />}
-            </GoogleMap>
-          </LoadScript>
-        </div>
-
-        {error && (
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-800">{error}</p>
-          </div>
-        )}
-
-        {/* Instructions */}
-        {directions && directions.routes[0] && (
-          <div className="mt-6 bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-bold text-black mb-4">Directions</h2>
-            <div className="space-y-2">
-              {directions.routes[0].legs[0].steps.map((step: any, index: number) => (
-                <div key={index} className="flex gap-3 p-3 hover:bg-gray-50 rounded">
-                  <span className="font-medium text-indigo-600 min-w-[30px]">{index + 1}.</span>
-                  <p className="text-gray-700" dangerouslySetInnerHTML={{ __html: step.instructions }} />
+          {/* Directions List */}
+          <div style={{ flex: 1, overflowY: "auto", background: "rgba(255, 255, 255, 0.03)", border: "1px solid rgba(255, 255, 255, 0.08)", borderRadius: "20px", display: "flex", flexDirection: "column" }}>
+            <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(255, 255, 255, 0.08)", fontSize: "14px", fontWeight: 700, color: "rgba(255, 255, 255, 0.8)" }}>
+              Navigation Steps
+            </div>
+            <div style={{ padding: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
+              {routeData?.maneuvers ? (
+                routeData.maneuvers.map((step: any, i: number) => (
+                  <div key={i} style={{ padding: "12px", borderRadius: "12px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid rgba(255, 255, 255, 0.05)", display: "flex", gap: "12px" }}>
+                    <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "rgba(79, 142, 247, 0.1)", color: "#4f8ef7", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: 800, flexShrink: 0 }}>
+                      {i + 1}
+                    </div>
+                    <div style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.6)", lineHeight: "1.4" }}>
+                      {step.instruction}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div style={{ padding: "40px 20px", textAlign: "center", color: "rgba(255, 255, 255, 0.3)", fontSize: "13px" }}>
+                  <Navigation size={32} style={{ marginBottom: "12px", opacity: 0.2 }} />
+                  {isLoading ? "Generating path..." : "No step-by-step data available."}
                 </div>
-              ))}
+              )}
             </div>
           </div>
-        )}
-      </div>
+        </aside>
+      </main>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes spin { to { transform: rotate(360deg); } }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+      `}} />
     </div>
-  )
-} 
+  );
+}
+ 
