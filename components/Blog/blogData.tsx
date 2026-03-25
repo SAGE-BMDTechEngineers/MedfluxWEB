@@ -139,7 +139,7 @@ const blogData: Blog[] = [
     id: 6,
     title: "Digital Health Platforms and the Patient Experience",
     paragraph:
-      "From virtual consultations to same-day prescription delivery, digital-first pharmacy platforms are setting a new standard.",
+      "From virtual consultations to same-day prescription delivery, digital-first pharmacy platforms are setting a new standard..",
     image: "/images/blog/blog6.jpg",
     author: {
       name: "Dr. Ewurabena Quaye",
