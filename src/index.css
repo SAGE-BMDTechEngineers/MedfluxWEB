@@ -1,0 +1,139 @@
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 30% 3%;
+    --foreground: 210 40% 98%;
+
+    --card: 220 25% 6%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 220 25% 6%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 220 85% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 270 70% 55%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 220 20% 12%;
+    --muted-foreground: 215 20% 55%;
+
+    --accent: 185 100% 50%;
+    --accent-foreground: 220 30% 3%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 220 20% 14%;
+    --input: 220 20% 14%;
+    --ring: 220 85% 60%;
+
+    --radius: 0.75rem;
+
+    /* Custom healthcare tokens */
+    --cosmos-bg: 220 30% 3%;
+    --cosmos-surface: 220 25% 6%;
+    --cosmos-glow-blue: 220 85% 60%;
+    --cosmos-glow-violet: 270 70% 55%;
+    --cosmos-glow-cyan: 185 100% 50%;
+    --cosmos-glow-green: 155 80% 65%;
+    --cosmos-glow-amber: 40 90% 62%;
+    --cosmos-glow-pink: 340 80% 58%;
+
+    --font-display: 'Syne', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+
+    --sidebar-background: 220 25% 6%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 220 85% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 20% 12%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 220 20% 14%;
+    --sidebar-ring: 220 85% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
+    overflow-x: hidden;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
+  .font-body {
+    font-family: var(--font-body);
+  }
+  .gradient-primary {
+    background: linear-gradient(135deg, hsl(var(--cosmos-glow-blue)), hsl(var(--cosmos-glow-violet)));
+  }
+  .gradient-text {
+    background: linear-gradient(135deg, hsl(var(--cosmos-glow-blue)), hsl(var(--cosmos-glow-violet)), hsl(var(--cosmos-glow-cyan)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .glass-surface {
+    background: hsla(var(--cosmos-surface), 0.6);
+    backdrop-filter: blur(18px);
+    border: 1px solid hsla(var(--foreground), 0.07);
+  }
+  .glow-blue {
+    box-shadow: 0 0 40px hsla(var(--cosmos-glow-blue), 0.3);
+  }
+  .glow-violet {
+    box-shadow: 0 0 40px hsla(var(--cosmos-glow-violet), 0.3);
+  }
+}
+
+/* Animations */
+@keyframes mfFadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes mfCardIn {
+  from { opacity: 0; transform: translateY(28px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes mfSpin {
+  to { transform: rotate(360deg); }
+}
+@keyframes mfLineExp {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@keyframes mfPulse {
+  0%, 100% { box-shadow: 0 0 0 0 hsla(var(--cosmos-glow-blue), 0.4); }
+  50% { box-shadow: 0 0 0 8px hsla(var(--cosmos-glow-blue), 0); }
+}
+@keyframes mfGlow {
+  0%, 100% { opacity: 0.28; }
+  50% { opacity: 0.65; }
+}
+@keyframes mfDot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.5; }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: hsl(var(--cosmos-bg)); }
+::-webkit-scrollbar-thumb { background: hsla(var(--cosmos-glow-blue), 0.3); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: hsla(var(--cosmos-glow-blue), 0.5); }
