@@ -39,9 +39,9 @@ export default function MedicationFinder() {
     setSearchError(null);
     try {
       const lat = userLocation?.lat || 5.6037; // Default to Accra if not available
-      const lng = userLocation?.lng || -0.1870;
+      const lon = userLocation?.lng || -0.1870;
       
-      const url = `${serverUrl}/pharmacy/search-nearby-medicine?term=${encodeURIComponent(searchQuery)}&latitude=${lat}&longitude=${lng}`;
+      const url = `${serverUrl}/pharmacy/search-nearby-medicine?term=${encodeURIComponent(searchQuery)}&lat=${lat}&lon=${lon}`;
       const res = await fetch(url);
       if (!res.ok) {
         const errorText = await res.text();
