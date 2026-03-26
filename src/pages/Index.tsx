@@ -49,33 +49,51 @@ export default function MedicationFinder() {
       }
       
       const rawData = await res.json();
-      // Ensure data is an array (handle { results: [] } or just [])
-      const data = Array.isArray(rawData) ? rawData : (rawData.results || []);
+      console.log("Search API Raw Data:", rawData);
+      
+      // Attempt to extract the results array from various common response patterns
+      let data: any[] = [];
+      if (Array.isArray(rawData)) {
+        data = rawData;
+      } else if (rawData.results && Array.isArray(rawData.results)) {
+        data = rawData.results;
+      } else if (rawData.data && Array.isArray(rawData.data)) {
+        data = rawData.data;
+      } else if (rawData.pharmacy_medicines && Array.isArray(rawData.pharmacy_medicines)) {
+        data = rawData.pharmacy_medicines;
+      } else if (typeof rawData === 'object' && rawData !== null) {
+        // If it's a single object that looks like a result, wrap it in an array
+        if (rawData.pharmacy_id || rawData.medication_id) {
+          data = [rawData];
+        }
+      }
       
       if (data.length === 0) {
-        setSearchError("No results found for your search. Try a different medication name.");
+        setSearchError("No medications found. Try different keywords or check the spelling of your search term.");
+        setSearchResults([]);
+        return;
       }
       
       const results: PharmacyMedicine[] = data.map((item: any) => ({
         pharmacy: {
-          id: String(item.pharmacy_id || ""),
-          name: item.pharmacy_name || "Unknown Pharmacy",
-          address: item.pharmacy_location || "No address provided",
-          phone: item.pharmacy_phone || "N/A",
-          email: item.pharmacy_email,
-          latitude: item.latitude ? parseFloat(item.latitude) : undefined,
-          longitude: item.longitude ? parseFloat(item.longitude) : undefined,
-          rating: item.pharmacy_ratings ? parseFloat(item.pharmacy_ratings) : undefined,
+          id: String(item.pharmacy_id || item.id || ""),
+          name: item.pharmacy_name || item.name || "Unknown Pharmacy",
+          address: item.pharmacy_location || item.location || "No address provided",
+          phone: item.pharmacy_phone || item.phone || "N/A",
+          email: item.pharmacy_email || item.email,
+          latitude: item.latitude ? parseFloat(String(item.latitude)) : undefined,
+          longitude: item.longitude ? parseFloat(String(item.longitude)) : undefined,
+          rating: item.pharmacy_ratings ? parseFloat(String(item.pharmacy_ratings)) : undefined,
           is_verified: true,
         },
         medicine: {
-          id: String(item.medication_id || ""),
-          name: item.medication_name || searchQuery,
-          price: item.price ? parseFloat(item.price) : 0,
+          id: String(item.medication_id || item.medicine_id || ""),
+          name: item.medication_name || item.medicine_name || searchQuery,
+          price: item.price ? parseFloat(String(item.price)) : 0,
           category: item.category || "General",
         },
-        in_stock: (item.quantity || 0) > 0,
-        quantity_available: item.quantity || 0,
+        in_stock: (Number(item.quantity) || 0) > 0,
+        quantity_available: Number(item.quantity) || 0,
         last_updated: new Date().toISOString(),
       }));
       setSearchResults(
