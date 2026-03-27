@@ -6,7 +6,7 @@ const steps = [
   { icon: <UserX size={20} />, title: "Navigate to Account Settings", desc: "Open the app and tap on your profile icon, then select 'Account Settings' from the menu." },
   { icon: <AlertTriangle size={20} />, title: "Select 'Delete My Account'", desc: "Scroll to the bottom of the settings page and tap the 'Delete My Account' option highlighted in red." },
   { icon: <Lock size={20} />, title: "Verify Your Identity", desc: "Enter your password or confirm via OTP sent to your registered email or phone number for security." },
-  { icon: <CheckCircle size={20} />, title: "Confirm Deletion", desc: "Review the summary of what will be removed, then tap 'Confirm Delete' to permanently remove your account." },
+  { icon: <CheckCircle size={20} />, title: "Confirm Deletion", desc: "Review the summary of what will be removed, then tap 'Confirm Delete' to permanently remove your Medflux account." },
 ];
 
 const confidentialItems = [
