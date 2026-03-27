@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import DirectionsPage from "./pages/DirectionsPage";
 import AboutPage from "./pages/AboutPage";
 import PolicyPage from "./pages/PolicyPage";
+import DeleteAccountPage from "./pages/DeleteAccountPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/about" element={<AboutPage />} />
           <Route path="/policy" element={<PolicyPage />} />
           <Route path="/directions" element={<DirectionsPage />} />
+          <Route path="/delete-account" element={<DeleteAccountPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </HashRouter>

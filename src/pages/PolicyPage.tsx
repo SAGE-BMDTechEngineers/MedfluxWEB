@@ -16,7 +16,7 @@ const sections = [
   {
     title: "Terms of Use",
     items: [
-      "MedFind is an information platform — we do not sell medications directly. All purchases are made through independent pharmacies.",
+      "Medflux is an information platform — we do not sell medications directly. All purchases are made through independent pharmacies.",
       "Medication availability shown is based on real-time data from pharmacy partners but may occasionally differ from actual stock.",
       "Pricing displayed is provided by pharmacies and may vary. Always confirm final pricing at the pharmacy.",
       "Users must be 18 years or older to use this platform. Medication information is not a substitute for professional medical advice.",

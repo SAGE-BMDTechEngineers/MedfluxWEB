@@ -42,7 +42,7 @@ export default function AboutPage() {
             <div>
               <h2 className="font-display text-2xl font-bold text-foreground mb-4">Our Story</h2>
               <p className="font-body text-muted-foreground leading-relaxed mb-4">
-                Founded by healthcare professionals and technologists, MedFind was born from a simple frustration — too many patients driving from pharmacy to pharmacy only to find their medication out of stock.
+                Founded by healthcare professionals and technologists, Medflux was born from a simple frustration — too many patients driving from pharmacy to pharmacy only to find their medication out of stock.
               </p>
               <p className="font-body text-muted-foreground leading-relaxed">
                 We built a platform that aggregates real-time inventory data from a growing network of verified pharmacies, overlays it onto an intelligent mapping system, and delivers instant answers to the question: <em className="text-primary">"Where can I get my medication right now?"</em>

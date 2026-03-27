@@ -1,8 +1,8 @@
 "use client";
 import Image from "next/image";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { Link, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { BookOpen } from "lucide-react";
 import ThemeToggler from "./ThemeToggler";
 import menuData from "./menuData";
 
@@ -41,7 +41,7 @@ const Header = () => {
     }
   };
 
-  const usePathName = usePathname();
+  const { pathname } = useLocation();
 
   return (
     <>
@@ -56,7 +56,7 @@ const Header = () => {
           <div className="relative -mx-4 flex items-center justify-between">
             <div className="w-60 max-w-full px-4 xl:mr-12">
               <Link
-                href="/"
+                to="/"
                 className={`header-logo block w-full ${
                   sticky ? "py-5 lg:py-2" : "py-8"
                 } `}
@@ -114,9 +114,9 @@ const Header = () => {
                       <li key={index} className="group relative">
                         {menuItem.path ? (
                           <Link
-                            href={menuItem.path}
+                            to={menuItem.path}
                             className={`flex py-2 text-base lg:mr-0 lg:inline-flex lg:px-0 lg:py-6 ${
-                              usePathName === menuItem.path
+                              pathname === menuItem.path
                                 ? "text-primary dark:text-white"
                                 : "text-dark hover:text-primary dark:text-white/70 dark:hover:text-white"
                             }`}
@@ -149,7 +149,7 @@ const Header = () => {
                             >
                               {menuItem.submenu.map((submenuItem, index) => (
                                 <Link
-                                  href={submenuItem.path}
+                                  to={submenuItem.path}
                                   key={index}
                                   className="block rounded py-2.5 text-sm text-dark hover:text-primary dark:text-white/70 dark:hover:text-white lg:px-3"
                                   onClick={closeNavbar} // Close navbar on click
@@ -168,10 +168,21 @@ const Header = () => {
               <div className="flex items-center justify-end pr-16 lg:pr-0">
                 
                 <Link
-                  href="/signin"
+                  to="/signin"
                   className="hidden px-7 py-3 text-base font-semibold text-dark hover:opacity-70 dark:text-white md:block"
                 >
                   Sign In
+                </Link>
+                <Link
+                  to="/delete-account"
+                  className="flex items-center gap-1.5 font-body text-sm font-medium px-4 py-2 rounded-lg transition-all duration-200"
+                  style={{
+                    color: pathname === "/delete-account" ? "hsl(var(--primary))" : "rgba(255,255,255,0.5)",
+                    background: pathname === "/delete-account" ? "rgba(79,142,247,0.1)" : "transparent",
+                  }}
+                >
+                  <BookOpen size={15} />
+                  Guide
                 </Link>
                
                 <div>
