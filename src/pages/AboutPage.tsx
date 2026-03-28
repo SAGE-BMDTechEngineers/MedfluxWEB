@@ -30,7 +30,7 @@ export default function AboutPage() {
             </h1>
             <div className="w-16 h-0.5 mx-auto mb-5" style={{ background: "linear-gradient(90deg, transparent, hsl(var(--primary)), transparent)" }} />
             <p className="font-body text-muted-foreground max-w-xl mx-auto leading-relaxed">
-              We're on a mission to eliminate delays in accessing prescribed medications by bridging the gap between patients and pharmacies with real-time technology.
+              We are on a mission to eliminate delays in accessing prescribed medications by bridging the gap between patients and pharmacies with real-time technology.
             </p>
           </div>
 
